@@ -1,12 +1,139 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Briefcase, Search, TrendingUp, Users } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/5" />
+        <div className="container mx-auto px-4 py-20 relative">
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-[var(--gradient-hero)] bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4 duration-1000">
+              Part Time Paisa
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground mb-12 animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-200">
+              Find Your Perfect Part-Time Opportunity or Hire Talented Professionals
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
+              <Card
+                className="p-8 cursor-pointer hover:shadow-[var(--shadow-elevated)] transition-all hover:scale-105 group"
+                onClick={() => navigate("/add-job")}
+              >
+                <div className="p-4 rounded-full bg-gradient-to-br from-primary to-secondary w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <Briefcase className="h-10 w-10 text-primary-foreground" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Post a Job
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Looking for talented individuals? Post your job opportunity now.
+                </p>
+                <Button
+                  className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                  size="lg"
+                >
+                  Add Job
+                </Button>
+              </Card>
+
+              <Card
+                className="p-8 cursor-pointer hover:shadow-[var(--shadow-elevated)] transition-all hover:scale-105 group"
+                onClick={() => navigate("/jobs")}
+              >
+                <div className="p-4 rounded-full bg-gradient-to-br from-secondary to-primary w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <Search className="h-10 w-10 text-secondary-foreground" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+                  Browse Jobs
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Explore available part-time positions and apply for your dream job.
+                </p>
+                <Button
+                  className="w-full bg-gradient-to-r from-secondary to-primary hover:opacity-90"
+                  size="lg"
+                >
+                  View Jobs
+                </Button>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-accent/20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Why Choose Part Time Paisa?
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <Card className="p-6 text-center hover:shadow-[var(--shadow-card)] transition-shadow">
+              <div className="p-3 rounded-full bg-gradient-to-br from-primary to-secondary w-fit mx-auto mb-4">
+                <Users className="h-8 w-8 text-primary-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Easy to Use</h3>
+              <p className="text-muted-foreground">
+                Simple and intuitive interface for both job seekers and employers
+              </p>
+            </Card>
+
+            <Card className="p-6 text-center hover:shadow-[var(--shadow-card)] transition-shadow">
+              <div className="p-3 rounded-full bg-gradient-to-br from-secondary to-primary w-fit mx-auto mb-4">
+                <TrendingUp className="h-8 w-8 text-secondary-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Quick Applications</h3>
+              <p className="text-muted-foreground">
+                Apply to multiple jobs quickly with our streamlined application process
+              </p>
+            </Card>
+
+            <Card className="p-6 text-center hover:shadow-[var(--shadow-card)] transition-shadow">
+              <div className="p-3 rounded-full bg-gradient-to-br from-primary to-secondary w-fit mx-auto mb-4">
+                <Briefcase className="h-8 w-8 text-primary-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Direct Contact</h3>
+              <p className="text-muted-foreground">
+                Connect directly with employers via phone or email
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-6">Ready to Get Started?</h2>
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Join thousands of job seekers and employers finding success on Part Time Paisa
+          </p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Button
+              onClick={() => navigate("/jobs")}
+              size="lg"
+              className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+            >
+              Browse Jobs
+            </Button>
+            <Button
+              onClick={() => navigate("/add-job")}
+              size="lg"
+              variant="outline"
+              className="border-2"
+            >
+              Post a Job
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
