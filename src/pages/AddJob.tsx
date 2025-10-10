@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Briefcase, ArrowLeft } from "lucide-react";
 const AddJob = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState({
     job_name: "",
     company: "",
@@ -26,12 +27,52 @@ const AddJob = () => {
     contact_email: "",
   });
 
+  useEffect(() => {
+    // Check authentication
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Please login first", {
+          description: "You need to be logged in to post jobs",
+        });
+        navigate("/auth");
+        return;
+      }
+      
+      setUser(session.user);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!session) {
+          navigate("/auth");
+        } else {
+          setUser(session.user);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("jobs").insert([formData]);
+      if (!user) {
+        toast.error("Please login first");
+        navigate("/auth");
+        return;
+      }
+
+      const { error } = await supabase.from("jobs").insert([
+        { ...formData, user_id: user.id }
+      ]);
 
       if (error) throw error;
 

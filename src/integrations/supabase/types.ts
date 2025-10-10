@@ -80,6 +80,7 @@ export type Database = {
           location: string
           qualification: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           age_limit?: string | null
@@ -96,6 +97,7 @@ export type Database = {
           location: string
           qualification: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           age_limit?: string | null
@@ -111,6 +113,31 @@ export type Database = {
           job_type?: string
           location?: string
           qualification?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
           updated_at?: string
         }
         Relationships: []

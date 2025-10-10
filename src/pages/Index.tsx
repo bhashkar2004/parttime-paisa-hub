@@ -1,16 +1,80 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Briefcase, Search, TrendingUp, Users } from "lucide-react";
+import { Briefcase, Search, TrendingUp, Users, LogOut, LogIn } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logged out successfully");
+  };
+
+  const handleAddJob = () => {
+    if (!user) {
+      toast.error("Please login first", {
+        description: "You need to be logged in to post jobs",
+      });
+      navigate("/auth");
+    } else {
+      navigate("/add-job");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/5" />
+        
+        {/* Auth Button */}
+        <div className="absolute top-4 right-4 z-10">
+          {user ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground hidden md:inline">
+                {user.email}
+              </span>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => navigate("/auth")}
+              className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+            >
+              <LogIn className="mr-2 h-4 w-4" />
+              Login / Sign Up
+            </Button>
+          )}
+        </div>
+
         <div className="container mx-auto px-4 py-20 relative">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-[var(--gradient-hero)] bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4 duration-1000">
@@ -23,7 +87,7 @@ const Index = () => {
             <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
               <Card
                 className="p-8 cursor-pointer hover:shadow-[var(--shadow-elevated)] transition-all hover:scale-105 group"
-                onClick={() => navigate("/add-job")}
+                onClick={handleAddJob}
               >
                 <div className="p-4 rounded-full bg-gradient-to-br from-primary to-secondary w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
                   <Briefcase className="h-10 w-10 text-primary-foreground" />
