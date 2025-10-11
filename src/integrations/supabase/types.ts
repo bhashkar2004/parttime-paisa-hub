@@ -25,8 +25,9 @@ export type Database = {
           id: string
           job_id: string
           last_name: string
-          qualification: string
+          qualification: string | null
           resume_url: string | null
+          user_id: string | null
         }
         Insert: {
           age: number
@@ -38,8 +39,9 @@ export type Database = {
           id?: string
           job_id: string
           last_name: string
-          qualification: string
+          qualification?: string | null
           resume_url?: string | null
+          user_id?: string | null
         }
         Update: {
           age?: number
@@ -51,8 +53,9 @@ export type Database = {
           id?: string
           job_id?: string
           last_name?: string
-          qualification?: string
+          qualification?: string | null
           resume_url?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -69,8 +72,9 @@ export type Database = {
           age_limit: string | null
           application_deadline: string
           company: string
-          contact_email: string
-          contact_phone: string
+          company_photo: string | null
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           description: string
           experience: string | null
@@ -86,8 +90,9 @@ export type Database = {
           age_limit?: string | null
           application_deadline: string
           company: string
-          contact_email: string
-          contact_phone: string
+          company_photo?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           description: string
           experience?: string | null
@@ -103,8 +108,9 @@ export type Database = {
           age_limit?: string | null
           application_deadline?: string
           company?: string
-          contact_email?: string
-          contact_phone?: string
+          company_photo?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           description?: string
           experience?: string | null

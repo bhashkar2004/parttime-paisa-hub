@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Briefcase, ArrowLeft } from "lucide-react";
@@ -13,6 +14,7 @@ const AddJob = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [companyPhoto, setCompanyPhoto] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     job_name: "",
     company: "",
@@ -28,7 +30,6 @@ const AddJob = () => {
   });
 
   useEffect(() => {
-    // Check authentication
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -45,7 +46,6 @@ const AddJob = () => {
 
     checkAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!session) {
@@ -70,8 +70,26 @@ const AddJob = () => {
         return;
       }
 
+      let company_photo_url = null;
+
+      if (companyPhoto) {
+        const fileExt = companyPhoto.name.split('.').pop();
+        const fileName = `${user.id}/${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('company-photos')
+          .upload(fileName, companyPhoto);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('company-photos')
+          .getPublicUrl(fileName);
+        
+        company_photo_url = publicUrl;
+      }
+
       const { error } = await supabase.from("jobs").insert([
-        { ...formData, user_id: user.id }
+        { ...formData, user_id: user.id, company_photo: company_photo_url }
       ]);
 
       if (error) throw error;
@@ -80,7 +98,6 @@ const AddJob = () => {
         description: "Your job posting is now live!",
       });
 
-      // Reset form
       setFormData({
         job_name: "",
         company: "",
@@ -94,8 +111,8 @@ const AddJob = () => {
         contact_phone: "",
         contact_email: "",
       });
+      setCompanyPhoto(null);
 
-      // Navigate to jobs page after 1.5 seconds
       setTimeout(() => navigate("/jobs"), 1500);
     } catch (error: any) {
       toast.error("Error adding job", {
@@ -109,11 +126,7 @@ const AddJob = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-6"
-        >
+        <Button variant="ghost" onClick={() => navigate("/")} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Home
         </Button>
@@ -140,20 +153,30 @@ const AddJob = () => {
                   required
                   value={formData.job_name}
                   onChange={(e) => setFormData({ ...formData, job_name: e.target.value })}
-                  placeholder="e.g., Content Writer"
+                  placeholder="e.g., Shop Assistant"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="company">Company Name *</Label>
+                <Label htmlFor="company">Shop/Company Name *</Label>
                 <Input
                   id="company"
                   required
                   value={formData.company}
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  placeholder="e.g., Tech Solutions Inc."
+                  placeholder="e.g., Local Store"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company_photo">Shop/Company Photo (Optional)</Label>
+              <Input
+                id="company_photo"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setCompanyPhoto(e.target.files?.[0] || null)}
+              />
             </div>
 
             <div className="space-y-2">
@@ -164,53 +187,75 @@ const AddJob = () => {
                 rows={4}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Describe the role, responsibilities, and requirements..."
+                placeholder="Describe the role and responsibilities..."
               />
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="qualification">Qualification *</Label>
-                <Input
-                  id="qualification"
-                  required
+                <Select
                   value={formData.qualification}
-                  onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                  placeholder="e.g., Bachelor's Degree"
-                />
+                  onValueChange={(value) => setFormData({ ...formData, qualification: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select qualification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10th">10th</SelectItem>
+                    <SelectItem value="Inter">Inter</SelectItem>
+                    <SelectItem value="Graduation">Graduation</SelectItem>
+                    <SelectItem value="Post Graduation">Post Graduation</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="experience">Experience</Label>
-                <Input
-                  id="experience"
+                <Label htmlFor="experience">Experience (Optional)</Label>
+                <Select
                   value={formData.experience}
-                  onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                  placeholder="e.g., 2-3 years"
-                />
+                  onValueChange={(value) => setFormData({ ...formData, experience: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select experience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0-2 years">0-2 years</SelectItem>
+                    <SelectItem value="3-5 years">3-5 years</SelectItem>
+                    <SelectItem value="6-10 years">6-10 years</SelectItem>
+                    <SelectItem value="10+ years">10+ years</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="age_limit">Age Limit</Label>
+                <Label htmlFor="age_limit">Age Limit (Optional)</Label>
                 <Input
                   id="age_limit"
                   value={formData.age_limit}
                   onChange={(e) => setFormData({ ...formData, age_limit: e.target.value })}
-                  placeholder="e.g., 21-35 years"
+                  placeholder="e.g., 18-35"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="job_type">Job Type *</Label>
-                <Input
-                  id="job_type"
-                  required
+                <Select
                   value={formData.job_type}
-                  onChange={(e) => setFormData({ ...formData, job_type: e.target.value })}
-                  placeholder="e.g., Part-time, Full-time, Remote"
-                />
+                  onValueChange={(value) => setFormData({ ...formData, job_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select job type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Part Time">Part Time</SelectItem>
+                    <SelectItem value="Full Time">Full Time</SelectItem>
+                    <SelectItem value="Internship">Internship</SelectItem>
+                    <SelectItem value="Contract">Contract</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -222,7 +267,7 @@ const AddJob = () => {
                   required
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g., Mumbai, Maharashtra"
+                  placeholder="e.g., Hyderabad"
                 />
               </div>
 
@@ -239,14 +284,13 @@ const AddJob = () => {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Contact Details</h3>
+              <h3 className="text-lg font-semibold">Contact Details (Optional)</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="contact_phone">Phone Number *</Label>
+                  <Label htmlFor="contact_phone">Phone Number</Label>
                   <Input
                     id="contact_phone"
                     type="tel"
-                    required
                     value={formData.contact_phone}
                     onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
                     placeholder="+91 9876543210"
@@ -254,14 +298,13 @@ const AddJob = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="contact_email">Email Address *</Label>
+                  <Label htmlFor="contact_email">Email Address</Label>
                   <Input
                     id="contact_email"
                     type="email"
-                    required
                     value={formData.contact_email}
                     onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                    placeholder="recruiter@company.com"
+                    placeholder="contact@shop.com"
                   />
                 </div>
               </div>
