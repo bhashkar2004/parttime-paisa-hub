@@ -23,6 +23,7 @@ const AddJob = () => {
     experience: "",
     qualification: "",
     location: "",
+    salary: "",
     application_deadline: "",
     job_type: "",
     contact_phone: "",
@@ -106,6 +107,7 @@ const AddJob = () => {
         experience: "",
         qualification: "",
         location: "",
+        salary: "",
         application_deadline: "",
         job_type: "",
         contact_phone: "",
@@ -272,15 +274,25 @@ const AddJob = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="application_deadline">Application Deadline *</Label>
+                <Label htmlFor="salary">Salary (Optional)</Label>
                 <Input
-                  id="application_deadline"
-                  type="date"
-                  required
-                  value={formData.application_deadline}
-                  onChange={(e) => setFormData({ ...formData, application_deadline: e.target.value })}
+                  id="salary"
+                  value={formData.salary}
+                  onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                  placeholder="e.g., ₹15,000 - ₹25,000 per month"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="application_deadline">Application Deadline *</Label>
+              <Input
+                id="application_deadline"
+                type="date"
+                required
+                value={formData.application_deadline}
+                onChange={(e) => setFormData({ ...formData, application_deadline: e.target.value })}
+              />
             </div>
 
             <div className="space-y-4">

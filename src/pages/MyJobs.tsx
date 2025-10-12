@@ -15,6 +15,7 @@ interface Job {
   job_type: string;
   created_at: string;
   company_photo: string | null;
+  applications?: { count: number }[];
 }
 
 const MyJobs = () => {
@@ -37,7 +38,10 @@ const MyJobs = () => {
 
       const { data, error } = await supabase
         .from("jobs")
-        .select("*")
+        .select(`
+          *,
+          applications:applications(count)
+        `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -120,23 +124,38 @@ const MyJobs = () => {
                 )}
                 <h3 className="text-xl font-semibold mb-2 line-clamp-1">{job.job_name}</h3>
                 <p className="text-sm text-muted-foreground mb-2">{job.company}</p>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{job.description}</p>
-                <div className="flex gap-2">
+                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{job.description}</p>
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="text-sm font-medium text-primary">
+                    {job.applications?.[0]?.count || 0} Applications
+                  </span>
+                </div>
+                <div className="space-y-2">
                   <Button
-                    onClick={() => navigate(`/edit-job/${job.id}`)}
-                    className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                    onClick={() => navigate(`/job-applications/${job.id}`)}
+                    className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
                     size="sm"
                   >
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    Edit
+                    View Applications ({job.applications?.[0]?.count || 0})
                   </Button>
-                  <Button
-                    onClick={() => handleDelete(job.id)}
-                    variant="destructive"
-                    size="sm"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => navigate(`/edit-job/${job.id}`)}
+                      className="flex-1"
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(job.id)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
