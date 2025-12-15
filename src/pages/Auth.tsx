@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Briefcase, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -21,7 +22,9 @@ const Auth = () => {
   });
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
@@ -33,12 +36,10 @@ const Auth = () => {
       }
     });
 
-    // Check for password recovery event
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (event === "PASSWORD_RECOVERY") {
-          setShowResetPassword(true);
-          setShowForgotPassword(false);
+        if (session) {
+          // User logged in after OTP verification
         }
       }
     );
@@ -133,13 +134,49 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success("Reset email sent!", {
-        description: "Check your email for the password reset link.",
+      toast.success("OTP sent!", {
+        description: "Check your email for the 6-digit verification code.",
       });
       setShowForgotPassword(false);
+      setShowOtpVerification(true);
     } catch (error: any) {
-      toast.error("Failed to send reset email", {
+      toast.error("Failed to send OTP", {
         description: error.message || "Please try again",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (otp.length !== 6) {
+      toast.error("Invalid OTP", {
+        description: "Please enter the 6-digit code from your email",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: forgotPasswordEmail,
+        token: otp,
+        type: "recovery",
+      });
+
+      if (error) throw error;
+
+      toast.success("OTP verified!", {
+        description: "Now set your new password.",
+      });
+      setShowOtpVerification(false);
+      setShowResetPassword(true);
+    } catch (error: any) {
+      toast.error("OTP verification failed", {
+        description: error.message || "Invalid or expired OTP",
       });
     } finally {
       setLoading(false);
@@ -249,6 +286,72 @@ const Auth = () => {
     );
   }
 
+  // OTP Verification Form
+  if (showOtpVerification) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-8 shadow-[var(--shadow-elevated)]">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="p-3 rounded-lg bg-gradient-to-br from-primary to-secondary">
+              <Briefcase className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-bold text-orange-500">
+              Part Time Paisa
+            </h1>
+          </div>
+
+          <h2 className="text-xl font-semibold text-center mb-2">Enter OTP</h2>
+          <p className="text-muted-foreground text-center mb-6">
+            We've sent a 6-digit code to {forgotPasswordEmail}
+          </p>
+
+          <form onSubmit={handleVerifyOtp} className="space-y-6">
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={6}
+                value={otp}
+                onChange={(value) => setOtp(value)}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading || otp.length !== 6}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              size="lg"
+            >
+              {loading ? "Verifying..." : "Verify OTP"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowOtpVerification(false);
+                setShowForgotPassword(true);
+                setOtp("");
+              }}
+              className="text-sm text-muted-foreground"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   // Forgot Password Form
   if (showForgotPassword) {
     return (
@@ -265,7 +368,7 @@ const Auth = () => {
 
           <h2 className="text-xl font-semibold text-center mb-2">Forgot Password?</h2>
           <p className="text-muted-foreground text-center mb-6">
-            Enter your email and we'll send you a link to reset your password.
+            Enter your email and we'll send you an OTP to reset your password.
           </p>
 
           <form onSubmit={handleForgotPassword} className="space-y-4">
@@ -291,7 +394,7 @@ const Auth = () => {
               className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
               size="lg"
             >
-              {loading ? "Sending..." : "Send Reset Link"}
+              {loading ? "Sending..." : "Send OTP"}
             </Button>
           </form>
 
