@@ -77,7 +77,7 @@ const Index = () => {
 
         <div className="container mx-auto px-4 py-20 relative">
           <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-[var(--gradient-hero)] bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-orange-500 animate-in fade-in slide-in-from-bottom-4 duration-1000">
               Part Time Paisa
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-12 animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-200">
