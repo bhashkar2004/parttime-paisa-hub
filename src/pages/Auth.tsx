@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Mail, Lock, User } from "lucide-react";
+import { Briefcase, Mail, Lock, User, ArrowLeft } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -19,6 +19,11 @@ const Auth = () => {
     confirmPassword: "",
     fullName: "",
   });
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -27,6 +32,18 @@ const Auth = () => {
         navigate("/");
       }
     });
+
+    // Check for password recovery event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "PASSWORD_RECOVERY") {
+          setShowResetPassword(true);
+          setShowForgotPassword(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -102,6 +119,197 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        forgotPasswordEmail,
+        {
+          redirectTo: `${window.location.origin}/auth`,
+        }
+      );
+
+      if (error) throw error;
+
+      toast.success("Reset email sent!", {
+        description: "Check your email for the password reset link.",
+      });
+      setShowForgotPassword(false);
+    } catch (error: any) {
+      toast.error("Failed to send reset email", {
+        description: error.message || "Please try again",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (newPassword !== confirmNewPassword) {
+      toast.error("Passwords don't match", {
+        description: "Please make sure both passwords are the same",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Password too short", {
+        description: "Password must be at least 6 characters",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      toast.success("Password updated!", {
+        description: "Your password has been reset successfully.",
+      });
+      setShowResetPassword(false);
+      navigate("/");
+    } catch (error: any) {
+      toast.error("Failed to reset password", {
+        description: error.message || "Please try again",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset Password Form
+  if (showResetPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-8 shadow-[var(--shadow-elevated)]">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="p-3 rounded-lg bg-gradient-to-br from-primary to-secondary">
+              <Briefcase className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-bold text-orange-500">
+              Part Time Paisa
+            </h1>
+          </div>
+
+          <h2 className="text-xl font-semibold text-center mb-6">Reset Your Password</h2>
+
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="new-password"
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="pl-9"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="confirm-new-password"
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="pl-9"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              size="lg"
+            >
+              {loading ? "Updating..." : "Update Password"}
+            </Button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
+  // Forgot Password Form
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-8 shadow-[var(--shadow-elevated)]">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="p-3 rounded-lg bg-gradient-to-br from-primary to-secondary">
+              <Briefcase className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-bold text-orange-500">
+              Part Time Paisa
+            </h1>
+          </div>
+
+          <h2 className="text-xl font-semibold text-center mb-2">Forgot Password?</h2>
+          <p className="text-muted-foreground text-center mb-6">
+            Enter your email and we'll send you a link to reset your password.
+          </p>
+
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="forgot-email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  className="pl-9"
+                  value={forgotPasswordEmail}
+                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              size="lg"
+            >
+              {loading ? "Sending..." : "Send Reset Link"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Button
+              variant="ghost"
+              onClick={() => setShowForgotPassword(false)}
+              className="text-sm text-muted-foreground"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Login
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 shadow-[var(--shadow-elevated)]">
@@ -109,7 +317,7 @@ const Auth = () => {
           <div className="p-3 rounded-lg bg-gradient-to-br from-primary to-secondary">
             <Briefcase className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-orange-500">
             Part Time Paisa
           </h1>
         </div>
@@ -141,7 +349,17 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="login-password">Password</Label>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="p-0 h-auto text-sm text-primary"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot Password?
+                  </Button>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
