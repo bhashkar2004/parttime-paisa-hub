@@ -1,1 +1,7 @@
 project_id = "clmncjjtacvkbbnlckli"
+
+[functions.send-otp]
+verify_jwt = false
+
+[functions.verify-otp-reset-password]
+verify_jwt = false

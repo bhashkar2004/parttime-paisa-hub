@@ -125,14 +125,12 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        forgotPasswordEmail,
-        {
-          redirectTo: `${window.location.origin}/auth`,
-        }
-      );
+      const response = await supabase.functions.invoke("send-otp", {
+        body: { email: forgotPasswordEmail },
+      });
 
-      if (error) throw error;
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
 
       toast.success("OTP sent!", {
         description: "Check your email for the 6-digit verification code.",
@@ -148,7 +146,7 @@ const Auth = () => {
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleVerifyOtpAndResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (otp.length !== 6) {
@@ -158,29 +156,8 @@ const Auth = () => {
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: forgotPasswordEmail,
-        token: otp,
-        type: "recovery",
-      });
-
-      if (error) throw error;
-
-      toast.success("OTP verified!", {
-        description: "Now set your new password.",
-      });
-      setShowOtpVerification(false);
-      setShowResetPassword(true);
-    } catch (error: any) {
-      toast.error("OTP verification failed", {
-        description: error.message || "Invalid or expired OTP",
-      });
-    } finally {
-      setLoading(false);
-    }
+    setShowOtpVerification(false);
+    setShowResetPassword(true);
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -203,17 +180,25 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      const response = await supabase.functions.invoke("verify-otp-reset-password", {
+        body: { 
+          email: forgotPasswordEmail,
+          otp: otp,
+          newPassword: newPassword,
+        },
       });
 
-      if (error) throw error;
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
 
       toast.success("Password updated!", {
-        description: "Your password has been reset successfully.",
+        description: "Your password has been reset successfully. Please login.",
       });
       setShowResetPassword(false);
-      navigate("/");
+      setOtp("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setForgotPasswordEmail("");
     } catch (error: any) {
       toast.error("Failed to reset password", {
         description: error.message || "Please try again",
@@ -305,7 +290,7 @@ const Auth = () => {
             We've sent a 6-digit code to {forgotPasswordEmail}
           </p>
 
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
+          <form onSubmit={handleVerifyOtpAndResetPassword} className="space-y-6">
             <div className="flex justify-center">
               <InputOTP
                 maxLength={6}
