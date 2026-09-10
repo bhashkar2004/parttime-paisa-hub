@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.verify-otp-reset-password]
 verify_jwt = false
+
+[functions.ai-job-assistant]
+verify_jwt = false
+
+[functions.ai-voice-speak]
+verify_jwt = false

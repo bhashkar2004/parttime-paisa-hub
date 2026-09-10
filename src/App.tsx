@@ -13,6 +13,7 @@ import MyApplications from "./pages/MyApplications";
 import EditJob from "./pages/EditJob";
 import JobApplications from "./pages/JobApplications";
 import NotFound from "./pages/NotFound";
+import AiJobAssistant from "./components/AiJobAssistant";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <AiJobAssistant />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
