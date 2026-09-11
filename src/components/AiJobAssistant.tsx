@@ -67,6 +67,10 @@ const AiJobAssistant = () => {
   const [listening, setListening] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [speaking, setSpeaking] = useState(false);
+  const [myLocation, setMyLocation] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [needsLocation, setNeedsLocation] = useState(false);
+
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
