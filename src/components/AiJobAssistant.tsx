@@ -14,6 +14,7 @@ import {
   Trash2,
   Loader2,
   MessageCircle,
+  MapPin,
 } from "lucide-react";
 import assistantLogo from "@/assets/ai-assistant.png";
 
@@ -29,6 +30,34 @@ const SUGGESTIONS = [
 const getSpeechRecognition = () =>
   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
+const NEAR_ME = /near me|nearby|near by|around me|mere paas|mere pass|paas m|aas paas|aaspaas/i;
+
+const getCurrentPosition = () =>
+  new Promise<GeolocationPosition>((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Location is not supported on this device."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 300000,
+    });
+  });
+
+const reverseGeocode = async (lat: number, lon: number) => {
+  const res = await fetch(
+    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
+  );
+  if (!res.ok) throw new Error("Could not read your area name.");
+  const data = await res.json();
+  const place =
+    data.locality || data.city || data.principalSubdivision || data.countryName || "";
+  if (!place) throw new Error("Could not read your area name.");
+  return String(place);
+};
+
+
 const AiJobAssistant = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -38,6 +67,10 @@ const AiJobAssistant = () => {
   const [listening, setListening] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [speaking, setSpeaking] = useState(false);
+  const [myLocation, setMyLocation] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [needsLocation, setNeedsLocation] = useState(false);
+
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -108,8 +141,20 @@ const AiJobAssistant = () => {
         return;
       }
 
+      let outgoing = message;
+      if (NEAR_ME.test(message)) {
+        if (!myLocation) {
+          setInput("");
+          setNeedsLocation(true);
+          return;
+        }
+        outgoing = `${message} (my current location is ${myLocation})`;
+      }
+
+
       stopAudio();
       setInput("");
+      setNeedsLocation(false);
       setMessages((prev) => [
         ...prev,
         { id: `local-${Date.now()}`, role: "user", content: message },
@@ -118,7 +163,7 @@ const AiJobAssistant = () => {
 
       try {
         const { data, error } = await supabase.functions.invoke("ai-job-assistant", {
-          body: { message },
+          body: { message: outgoing },
         });
 
         if (error) {
@@ -146,8 +191,61 @@ const AiJobAssistant = () => {
         setSending(false);
       }
     },
-    [sending, user, voiceOn, speak, stopAudio],
+    [sending, user, voiceOn, speak, stopAudio, myLocation],
   );
+
+  const detectLocation = useCallback(async () => {
+    setLocating(true);
+    try {
+      const pos = await getCurrentPosition();
+      const place = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      setMyLocation(place);
+      setNeedsLocation(false);
+      toast.success(`Location detected: ${place}`);
+      return place;
+    } catch (err: any) {
+      toast.error("Could not detect your location", {
+        description:
+          err?.code === 1
+            ? "Please allow location access in your browser and try again."
+            : (err?.message ?? "Please type your city instead."),
+      });
+      return null;
+    } finally {
+      setLocating(false);
+    }
+  }, []);
+
+  const sendNearMe = useCallback(async () => {
+    const place = myLocation ?? (await detectLocation());
+    if (!place) return;
+    setNeedsLocation(false);
+    stopAudio();
+    setInput("");
+    setMessages((prev) => [
+      ...prev,
+      { id: `local-${Date.now()}`, role: "user", content: `Jobs near me (${place})` },
+    ]);
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-job-assistant", {
+        body: { message: `Show part time jobs near my current location: ${place}` },
+      });
+      if (error) throw new Error("The assistant could not reply. Please try again.");
+      if (data?.error) throw new Error(data.error);
+      const reply = data?.reply as string;
+      setMessages((prev) => [
+        ...prev,
+        { id: `reply-${Date.now()}`, role: "assistant", content: reply },
+      ]);
+      if (voiceOn) speak(reply);
+    } catch (err: any) {
+      toast.error("Assistant unavailable", { description: err?.message });
+    } finally {
+      setSending(false);
+    }
+  }, [myLocation, detectLocation, stopAudio, voiceOn, speak]);
+
 
   const toggleMic = useCallback(() => {
     const SR = getSpeechRecognition();
@@ -265,11 +363,18 @@ const AiJobAssistant = () => {
                   job. Try one of these:
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {SUGGESTIONS.map((s) => (
-                    <Button key={s} variant="outline" size="sm" onClick={() => send(s)}>
-                      {s}
-                    </Button>
-                  ))}
+                  {SUGGESTIONS.map((s) =>
+                    NEAR_ME.test(s) ? (
+                      <Button key={s} variant="outline" size="sm" onClick={sendNearMe}>
+                        <MapPin className="mr-1 h-4 w-4" />
+                        {s}
+                      </Button>
+                    ) : (
+                      <Button key={s} variant="outline" size="sm" onClick={() => send(s)}>
+                        {s}
+                      </Button>
+                    ),
+                  )}
                 </div>
               </div>
             )}
@@ -289,6 +394,23 @@ const AiJobAssistant = () => {
                   <ReactMarkdown>{m.content}</ReactMarkdown>
                 </div>
               ),
+            )}
+
+            {needsLocation && (
+              <div className="rounded-xl border bg-muted/50 p-3">
+                <p className="mb-2 text-sm">
+                  To show jobs near you, I need your area. Detect it automatically or type your
+                  city.
+                </p>
+                <Button size="sm" onClick={sendNearMe} disabled={locating}>
+                  {locating ? (
+                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MapPin className="mr-1 h-4 w-4" />
+                  )}
+                  Detect my current location
+                </Button>
+              </div>
             )}
 
             {sending && (
@@ -311,6 +433,33 @@ const AiJobAssistant = () => {
                 Please login to chat with the assistant.
               </p>
             )}
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={sendNearMe}
+                disabled={locating || sending}
+              >
+                {locating ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <MapPin className="mr-1 h-4 w-4" />
+                )}
+                {myLocation ? `Jobs near ${myLocation}` : "Use my current location"}
+              </Button>
+              {myLocation && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMyLocation(null)}
+                  className="text-xs text-muted-foreground"
+                >
+                  Change
+                </Button>
+              )}
+            </div>
             <div className="flex items-end gap-2">
               <Textarea
                 ref={textareaRef}
