@@ -433,6 +433,33 @@ const AiJobAssistant = () => {
                 Please login to chat with the assistant.
               </p>
             )}
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={sendNearMe}
+                disabled={locating || sending}
+              >
+                {locating ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <MapPin className="mr-1 h-4 w-4" />
+                )}
+                {myLocation ? `Jobs near ${myLocation}` : "Use my current location"}
+              </Button>
+              {myLocation && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMyLocation(null)}
+                  className="text-xs text-muted-foreground"
+                >
+                  Change
+                </Button>
+              )}
+            </div>
             <div className="flex items-end gap-2">
               <Textarea
                 ref={textareaRef}
