@@ -141,16 +141,16 @@ const AiJobAssistant = () => {
         return;
       }
 
+      let outgoing = message;
       if (NEAR_ME.test(message)) {
-        if (myLocation) {
-          text = `${message} (my current location is ${myLocation})`;
-        } else {
+        if (!myLocation) {
           setInput("");
           setNeedsLocation(true);
           return;
         }
+        outgoing = `${message} (my current location is ${myLocation})`;
       }
-      const outgoing = NEAR_ME.test(message) && myLocation ? text : message;
+
 
       stopAudio();
       setInput("");
