@@ -396,6 +396,23 @@ const AiJobAssistant = () => {
               ),
             )}
 
+            {needsLocation && (
+              <div className="rounded-xl border bg-muted/50 p-3">
+                <p className="mb-2 text-sm">
+                  To show jobs near you, I need your area. Detect it automatically or type your
+                  city.
+                </p>
+                <Button size="sm" onClick={sendNearMe} disabled={locating}>
+                  {locating ? (
+                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MapPin className="mr-1 h-4 w-4" />
+                  )}
+                  Detect my current location
+                </Button>
+              </div>
+            )}
+
             {sending && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
