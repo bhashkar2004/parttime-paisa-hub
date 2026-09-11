@@ -163,7 +163,7 @@ const AiJobAssistant = () => {
 
       try {
         const { data, error } = await supabase.functions.invoke("ai-job-assistant", {
-          body: { message },
+          body: { message: outgoing },
         });
 
         if (error) {
