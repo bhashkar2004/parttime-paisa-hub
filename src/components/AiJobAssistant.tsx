@@ -30,6 +30,34 @@ const SUGGESTIONS = [
 const getSpeechRecognition = () =>
   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
+const NEAR_ME = /near me|nearby|near by|around me|mere paas|mere pass|paas m|aas paas|aaspaas/i;
+
+const getCurrentPosition = () =>
+  new Promise<GeolocationPosition>((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Location is not supported on this device."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 300000,
+    });
+  });
+
+const reverseGeocode = async (lat: number, lon: number) => {
+  const res = await fetch(
+    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
+  );
+  if (!res.ok) throw new Error("Could not read your area name.");
+  const data = await res.json();
+  const place =
+    data.locality || data.city || data.principalSubdivision || data.countryName || "";
+  if (!place) throw new Error("Could not read your area name.");
+  return String(place);
+};
+
+
 const AiJobAssistant = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
