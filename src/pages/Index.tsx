@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Briefcase, Search, TrendingUp, Users, LogOut, LogIn } from "lucide-react";
+import { Briefcase, Search, TrendingUp, Users, LogOut, LogIn, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -55,6 +55,14 @@ const Index = () => {
               <span className="text-sm text-muted-foreground hidden md:inline">
                 {user.email}
               </span>
+              <Button
+                onClick={() => navigate("/profile")}
+                variant="outline"
+                size="sm"
+              >
+                <UserRound className="mr-2 h-4 w-4" />
+                My Profile
+              </Button>
               <Button
                 onClick={handleLogout}
                 variant="outline"
