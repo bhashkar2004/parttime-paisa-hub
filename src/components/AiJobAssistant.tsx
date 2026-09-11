@@ -363,11 +363,18 @@ const AiJobAssistant = () => {
                   job. Try one of these:
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {SUGGESTIONS.map((s) => (
-                    <Button key={s} variant="outline" size="sm" onClick={() => send(s)}>
-                      {s}
-                    </Button>
-                  ))}
+                  {SUGGESTIONS.map((s) =>
+                    NEAR_ME.test(s) ? (
+                      <Button key={s} variant="outline" size="sm" onClick={sendNearMe}>
+                        <MapPin className="mr-1 h-4 w-4" />
+                        {s}
+                      </Button>
+                    ) : (
+                      <Button key={s} variant="outline" size="sm" onClick={() => send(s)}>
+                        {s}
+                      </Button>
+                    ),
+                  )}
                 </div>
               </div>
             )}
