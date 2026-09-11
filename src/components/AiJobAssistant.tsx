@@ -191,8 +191,61 @@ const AiJobAssistant = () => {
         setSending(false);
       }
     },
-    [sending, user, voiceOn, speak, stopAudio],
+    [sending, user, voiceOn, speak, stopAudio, myLocation],
   );
+
+  const detectLocation = useCallback(async () => {
+    setLocating(true);
+    try {
+      const pos = await getCurrentPosition();
+      const place = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      setMyLocation(place);
+      setNeedsLocation(false);
+      toast.success(`Location detected: ${place}`);
+      return place;
+    } catch (err: any) {
+      toast.error("Could not detect your location", {
+        description:
+          err?.code === 1
+            ? "Please allow location access in your browser and try again."
+            : (err?.message ?? "Please type your city instead."),
+      });
+      return null;
+    } finally {
+      setLocating(false);
+    }
+  }, []);
+
+  const sendNearMe = useCallback(async () => {
+    const place = myLocation ?? (await detectLocation());
+    if (!place) return;
+    setNeedsLocation(false);
+    stopAudio();
+    setInput("");
+    setMessages((prev) => [
+      ...prev,
+      { id: `local-${Date.now()}`, role: "user", content: `Jobs near me (${place})` },
+    ]);
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-job-assistant", {
+        body: { message: `Show part time jobs near my current location: ${place}` },
+      });
+      if (error) throw new Error("The assistant could not reply. Please try again.");
+      if (data?.error) throw new Error(data.error);
+      const reply = data?.reply as string;
+      setMessages((prev) => [
+        ...prev,
+        { id: `reply-${Date.now()}`, role: "assistant", content: reply },
+      ]);
+      if (voiceOn) speak(reply);
+    } catch (err: any) {
+      toast.error("Assistant unavailable", { description: err?.message });
+    } finally {
+      setSending(false);
+    }
+  }, [myLocation, detectLocation, stopAudio, voiceOn, speak]);
+
 
   const toggleMic = useCallback(() => {
     const SR = getSpeechRecognition();
