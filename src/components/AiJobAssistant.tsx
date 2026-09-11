@@ -14,6 +14,7 @@ import {
   Trash2,
   Loader2,
   MessageCircle,
+  MapPin,
 } from "lucide-react";
 import assistantLogo from "@/assets/ai-assistant.png";
 
