@@ -12,6 +12,7 @@ import MyJobs from "./pages/MyJobs";
 import MyApplications from "./pages/MyApplications";
 import EditJob from "./pages/EditJob";
 import JobApplications from "./pages/JobApplications";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import AiJobAssistant from "./components/AiJobAssistant";
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/edit-job/:jobId" element={<EditJob />} />
           <Route path="/job-applications/:jobId" element={<JobApplications />} />
+          <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
