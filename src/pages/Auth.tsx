@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { Briefcase, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const Auth = () => {
@@ -27,6 +27,25 @@ const Auth = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [show, setShow] = useState({
+    login: false,
+    signup: false,
+    signupConfirm: false,
+    newPass: false,
+    newPassConfirm: false,
+  });
+  const toggle = (k: keyof typeof show) =>
+    setShow((s) => ({ ...s, [k]: !s[k] }));
+  const eyeBtn = (k: keyof typeof show) => (
+    <button
+      type="button"
+      onClick={() => toggle(k)}
+      aria-label={show[k] ? "Hide password" : "Show password"}
+      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+    >
+      {show[k] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+    </button>
+  );
 
   useEffect(() => {
     // Check if user is already logged in
@@ -231,13 +250,14 @@ const Auth = () => {
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="new-password"
-                  type="password"
+                  type={show.newPass ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="pl-9"
+                  className="pl-9 pr-10"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
+                {eyeBtn("newPass")}
               </div>
             </div>
 
@@ -247,13 +267,14 @@ const Auth = () => {
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="confirm-new-password"
-                  type="password"
+                  type={show.newPassConfirm ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="pl-9"
+                  className="pl-9 pr-10"
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                 />
+                {eyeBtn("newPassConfirm")}
               </div>
             </div>
 
@@ -452,15 +473,16 @@ const Auth = () => {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="login-password"
-                    type="password"
+                    type={show.login ? "text" : "password"}
                     required
                     placeholder="••••••••"
-                    className="pl-9"
+                    className="pl-9 pr-10"
                     value={loginData.password}
                     onChange={(e) =>
                       setLoginData({ ...loginData, password: e.target.value })
                     }
                   />
+                  {eyeBtn("login")}
                 </div>
               </div>
 
@@ -519,15 +541,16 @@ const Auth = () => {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="signup-password"
-                    type="password"
+                    type={show.signup ? "text" : "password"}
                     required
                     placeholder="••••••••"
-                    className="pl-9"
+                    className="pl-9 pr-10"
                     value={signupData.password}
                     onChange={(e) =>
                       setSignupData({ ...signupData, password: e.target.value })
                     }
                   />
+                  {eyeBtn("signup")}
                 </div>
               </div>
 
@@ -537,10 +560,10 @@ const Auth = () => {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="confirm-password"
-                    type="password"
+                    type={show.signupConfirm ? "text" : "password"}
                     required
                     placeholder="••••••••"
-                    className="pl-9"
+                    className="pl-9 pr-10"
                     value={signupData.confirmPassword}
                     onChange={(e) =>
                       setSignupData({
@@ -549,6 +572,7 @@ const Auth = () => {
                       })
                     }
                   />
+                  {eyeBtn("signupConfirm")}
                 </div>
               </div>
 
