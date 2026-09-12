@@ -337,7 +337,7 @@ const AiJobAssistant = () => {
               <div className="flex-1 text-left">
                 <SheetTitle className="text-base">AI Job Assistant</SheetTitle>
                 <p className="text-xs text-muted-foreground">
-                  Ask in English, Hindi or Hinglish
+                  Ask in English, Hindi, Hinglish or Telugu
                 </p>
               </div>
               <Button
