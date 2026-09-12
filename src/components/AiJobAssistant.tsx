@@ -30,7 +30,13 @@ const SUGGESTIONS = [
 const getSpeechRecognition = () =>
   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-const NEAR_ME = /near me|nearby|near by|around me|mere paas|mere pass|paas m|aas paas|aaspaas/i;
+const VOICE_LANGS = [
+  { code: "en-IN", label: "English" },
+  { code: "hi-IN", label: "हिंदी" },
+  { code: "te-IN", label: "తెలుగు" },
+] as const;
+
+const NEAR_ME = /near me|nearby|near by|around me|mere paas|mere pass|paas m|aas paas|aaspaas|naa daggara|na daggara|daggarlo|chuttupakkala/i;
 
 const getCurrentPosition = () =>
   new Promise<GeolocationPosition>((resolve, reject) => {
