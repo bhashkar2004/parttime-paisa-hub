@@ -467,6 +467,21 @@ const AiJobAssistant = () => {
                 </Button>
               )}
             </div>
+            <div className="mb-2 flex items-center gap-1">
+              <span className="mr-1 text-xs text-muted-foreground">Speak in:</span>
+              {VOICE_LANGS.map((l) => (
+                <Button
+                  key={l.code}
+                  type="button"
+                  size="sm"
+                  variant={voiceLang === l.code ? "default" : "outline"}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setVoiceLang(l.code)}
+                >
+                  {l.label}
+                </Button>
+              ))}
+            </div>
             <div className="flex items-end gap-2">
               <Textarea
                 ref={textareaRef}
