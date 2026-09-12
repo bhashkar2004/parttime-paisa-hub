@@ -76,6 +76,7 @@ const AiJobAssistant = () => {
   const [myLocation, setMyLocation] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [needsLocation, setNeedsLocation] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<string>("en-IN");
 
 
   const scrollRef = useRef<HTMLDivElement>(null);
