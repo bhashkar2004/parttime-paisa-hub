@@ -292,7 +292,7 @@ const AiJobAssistant = () => {
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
-  }, [listening, send, stopAudio]);
+  }, [listening, send, stopAudio, voiceLang]);
 
   const clearChat = useCallback(async () => {
     stopAudio();
