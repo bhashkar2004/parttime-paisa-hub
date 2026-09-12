@@ -271,7 +271,7 @@ const AiJobAssistant = () => {
 
     stopAudio();
     const recognition = new SR();
-    recognition.lang = "en-IN";
+    recognition.lang = voiceLang;
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.onresult = (event: any) => {
