@@ -193,10 +193,31 @@ const AiJobAssistant = () => {
     async (text: string) => {
       const message = text.trim();
       if (!message || sending) return;
+
+      const nav = matchNavCommand(message);
+      if (nav) {
+        stopAudio();
+        setInput("");
+        setNeedsLocation(false);
+        setMessages((prev) => [
+          ...prev,
+          { id: `local-${Date.now()}`, role: "user", content: message },
+          {
+            id: `nav-${Date.now()}`,
+            role: "assistant",
+            content: `Opening **${nav.label}** for you.`,
+          },
+        ]);
+        setOpen(false);
+        navigate(nav.path);
+        return;
+      }
+
       if (!user) {
         toast.error("Please login first", { description: "Login to chat with the assistant." });
         return;
       }
+
 
       let outgoing = message;
       if (NEAR_ME.test(message)) {
