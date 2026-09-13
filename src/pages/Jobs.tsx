@@ -94,51 +94,73 @@ const Jobs = () => {
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
+            {t("backHome")}
           </Button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="flex items-center rounded-md border p-0.5">
+              <Languages className="mx-1.5 h-4 w-4 text-muted-foreground" />
+              <Button
+                size="sm"
+                variant={lang === "en" ? "default" : "ghost"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setLang("en")}
+              >
+                English
+              </Button>
+              <Button
+                size="sm"
+                variant={lang === "te" ? "default" : "ghost"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setLang("te")}
+              >
+                తెలుగు
+              </Button>
+            </div>
             <Button
               onClick={() => navigate("/my-applications")}
               variant="outline"
             >
-              My Applications
+              {t("myApplications")}
             </Button>
             <Button
               onClick={() => navigate("/my-jobs")}
               variant="outline"
             >
-              My Jobs
+              {t("myJobs")}
             </Button>
             <Button
               onClick={() => navigate("/add-job")}
               className="bg-gradient-to-r from-secondary to-primary hover:opacity-90"
             >
               <Briefcase className="mr-2 h-4 w-4" />
-              Post a Job
+              {t("postJob")}
             </Button>
           </div>
         </div>
 
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Available Opportunities
+            {t("heading")}
           </h1>
           <p className="text-xl text-muted-foreground">
-            Browse and apply for part-time positions
+            {t("subHeading")}
           </p>
+          {translating && (
+            <p className="mt-2 text-sm text-muted-foreground">{t("translating")}</p>
+          )}
         </div>
 
         {locations.length > 0 && (
           <div className="mb-8 max-w-xs mx-auto">
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
               <SelectTrigger>
-                <SelectValue placeholder="Filter by location" />
+                <SelectValue placeholder={t("filterLocation")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="all">{t("allLocations")}</SelectItem>
                 {locations.map((location) => (
                   <SelectItem key={location} value={location}>
-                    {location}
+                    {tr(location)}
                   </SelectItem>
                 ))}
               </SelectContent>
