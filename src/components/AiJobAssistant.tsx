@@ -270,7 +270,7 @@ const AiJobAssistant = () => {
         setSending(false);
       }
     },
-    [sending, user, voiceOn, speak, stopAudio, myLocation],
+    [sending, user, voiceOn, speak, stopAudio, myLocation, navigate],
   );
 
   const detectLocation = useCallback(async () => {
