@@ -115,6 +115,7 @@ const reverseGeocode = async (lat: number, lon: number) => {
 
 
 const AiJobAssistant = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
