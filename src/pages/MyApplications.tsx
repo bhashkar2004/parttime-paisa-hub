@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Briefcase, ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ interface Application {
   age: number;
   qualification: string | null;
   gender: string;
+  status: string;
   created_at: string;
   job_id: string;
   jobs: {
@@ -21,6 +23,20 @@ interface Application {
     location: string;
   } | null;
 }
+
+const statusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+  switch ((status || "pending").toLowerCase()) {
+    case "accepted":
+    case "shortlisted":
+      return "default";
+    case "rejected":
+      return "destructive";
+    case "reviewed":
+      return "secondary";
+    default:
+      return "outline";
+  }
+};
 
 const MyApplications = () => {
   const navigate = useNavigate();
@@ -123,7 +139,12 @@ const MyApplications = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {applications.map((app) => (
               <Card key={app.id} className="p-6 hover:shadow-[var(--shadow-elevated)] transition-shadow">
-                <h3 className="text-xl font-semibold mb-2">{app.jobs?.job_name || "Unknown Job"}</h3>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h3 className="text-xl font-semibold">{app.jobs?.job_name || "Unknown Job"}</h3>
+                  <Badge variant={statusVariant(app.status)} className="capitalize shrink-0">
+                    {app.status || "pending"}
+                  </Badge>
+                </div>
                 <p className="text-sm text-muted-foreground mb-2">{app.jobs?.company}</p>
                 <p className="text-sm text-muted-foreground mb-4">{app.jobs?.location}</p>
                 <div className="border-t pt-4 space-y-1 text-sm">

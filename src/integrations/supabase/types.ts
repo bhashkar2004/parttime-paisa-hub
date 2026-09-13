@@ -51,6 +51,7 @@ export type Database = {
           last_name: string
           qualification: string | null
           resume_url: string | null
+          status: string
           user_id: string | null
         }
         Insert: {
@@ -65,6 +66,7 @@ export type Database = {
           last_name: string
           qualification?: string | null
           resume_url?: string | null
+          status?: string
           user_id?: string | null
         }
         Update: {
@@ -79,6 +81,7 @@ export type Database = {
           last_name?: string
           qualification?: string | null
           resume_url?: string | null
+          status?: string
           user_id?: string | null
         }
         Relationships: [
