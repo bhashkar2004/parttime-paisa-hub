@@ -24,6 +24,20 @@ interface Application {
   } | null;
 }
 
+const statusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+  switch ((status || "pending").toLowerCase()) {
+    case "accepted":
+    case "shortlisted":
+      return "default";
+    case "rejected":
+      return "destructive";
+    case "reviewed":
+      return "secondary";
+    default:
+      return "outline";
+  }
+};
+
 const MyApplications = () => {
   const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
