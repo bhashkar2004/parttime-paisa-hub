@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +39,55 @@ const VOICE_LANGS = [
 
 const NEAR_ME = /near me|nearby|near by|around me|mere paas|mere pass|paas m|aas paas|aaspaas|naa daggara|na daggara|daggarlo|chuttupakkala/i;
 
+// Voice/text commands that open a page instead of asking the AI.
+const NAV_COMMANDS: { path: string; label: string; pattern: RegExp }[] = [
+  {
+    path: "/add-job",
+    label: "Post a Job",
+    pattern:
+      /(post|add|create|upload)\s*(a|an|the)?\s*(new\s*)?job|job\s*(post|dalna|daalna|add)|naukri\s*(post|daal)|udyogam\s*(post|pettu|add)/i,
+  },
+  {
+    path: "/jobs",
+    label: "Browse Jobs",
+    pattern:
+      /(browse|show|see|open|find|view|search)\s*(all\s*|the\s*)?jobs|job\s*list|all jobs|jobs page|naukri dikha|udyogalu chupinchu/i,
+  },
+  {
+    path: "/my-jobs",
+    label: "My Jobs",
+    pattern: /my\s*(posted\s*)?jobs|jobs i (posted|added)|posted jobs|meri naukri|naa udyogalu/i,
+  },
+  {
+    path: "/my-applications",
+    label: "My Applications",
+    pattern:
+      /my\s*applications?|applications? i (sent|made|submitted)|applied jobs|jobs i applied|meri applications/i,
+  },
+  {
+    path: "/profile",
+    label: "My Profile",
+    pattern: /(my|open|show|see|edit)\s*profile|profile page|naa profile/i,
+  },
+  {
+    path: "/auth",
+    label: "Login",
+    pattern: /^(open\s*)?(login|log in|sign in|sign up|signup|register)( page)?$/i,
+  },
+  {
+    path: "/",
+    label: "Home",
+    pattern: /(go|back)\s*(to\s*)?home|home page|open home/i,
+  },
+];
+
+const matchNavCommand = (text: string) => {
+  const t = text.trim();
+  if (NEAR_ME.test(t)) return null;
+  return NAV_COMMANDS.find((c) => c.pattern.test(t)) ?? null;
+};
+
+
 const getCurrentPosition = () =>
   new Promise<GeolocationPosition>((resolve, reject) => {
     if (!navigator.geolocation) {
@@ -65,6 +115,7 @@ const reverseGeocode = async (lat: number, lon: number) => {
 
 
 const AiJobAssistant = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -143,10 +194,31 @@ const AiJobAssistant = () => {
     async (text: string) => {
       const message = text.trim();
       if (!message || sending) return;
+
+      const nav = matchNavCommand(message);
+      if (nav) {
+        stopAudio();
+        setInput("");
+        setNeedsLocation(false);
+        setMessages((prev) => [
+          ...prev,
+          { id: `local-${Date.now()}`, role: "user", content: message },
+          {
+            id: `nav-${Date.now()}`,
+            role: "assistant",
+            content: `Opening **${nav.label}** for you.`,
+          },
+        ]);
+        setOpen(false);
+        navigate(nav.path);
+        return;
+      }
+
       if (!user) {
         toast.error("Please login first", { description: "Login to chat with the assistant." });
         return;
       }
+
 
       let outgoing = message;
       if (NEAR_ME.test(message)) {
@@ -198,7 +270,7 @@ const AiJobAssistant = () => {
         setSending(false);
       }
     },
-    [sending, user, voiceOn, speak, stopAudio, myLocation],
+    [sending, user, voiceOn, speak, stopAudio, myLocation, navigate],
   );
 
   const detectLocation = useCallback(async () => {
