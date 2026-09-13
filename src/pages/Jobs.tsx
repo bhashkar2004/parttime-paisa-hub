@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, MapPin, Calendar, Building2, ArrowLeft, Mail, Phone } from "lucide-react";
+import { Briefcase, MapPin, Calendar, Building2, ArrowLeft, Mail, Phone, Languages } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage, useTranslatedTexts } from "@/hooks/useLanguage";
 
 interface Job {
   id: string;
@@ -32,6 +33,17 @@ const Jobs = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [locations, setLocations] = useState<string[]>([]);
+  const { lang, setLang, t } = useLanguage();
+
+  const translatable = filteredJobs.flatMap((job) => [
+    job.job_name,
+    job.description,
+    job.location,
+    job.job_type,
+    job.qualification,
+    job.experience || "",
+  ]);
+  const { tr, busy: translating } = useTranslatedTexts(translatable, lang);
 
   useEffect(() => {
     fetchJobs();
