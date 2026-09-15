@@ -245,7 +245,7 @@ const Jobs = () => {
 
                 {(job.contact_phone || job.contact_email) && (
                   <div className="border-t pt-4 mt-4 space-y-2">
-                    <p className="text-xs text-muted-foreground font-semibold mb-2">Contact Recruiter:</p>
+                    <p className="text-xs text-muted-foreground font-semibold mb-2">{t("contactRecruiter")}</p>
                     <div className="flex items-center gap-2">
                       {job.contact_phone && (
                         <a
@@ -254,7 +254,7 @@ const Jobs = () => {
                           className="flex items-center gap-1 text-xs text-primary hover:underline"
                         >
                           <Phone className="h-3 w-3" />
-                          Call
+                          {t("call")}
                         </a>
                       )}
                       {job.contact_phone && job.contact_email && (
@@ -267,7 +267,7 @@ const Jobs = () => {
                           className="flex items-center gap-1 text-xs text-primary hover:underline"
                         >
                           <Mail className="h-3 w-3" />
-                          Email
+                          {t("email")}
                         </a>
                       )}
                     </div>
@@ -281,7 +281,7 @@ const Jobs = () => {
                   }}
                   className="w-full mt-4 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
                 >
-                  Apply Now
+                  {t("applyNow")}
                 </Button>
               </Card>
             ))}
