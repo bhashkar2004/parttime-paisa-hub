@@ -43,7 +43,7 @@ const Jobs = () => {
     job.qualification,
     job.experience || "",
   ]);
-  const { tr, busy: translating } = useTranslatedTexts(translatable, lang);
+  const { tr, busy: translating, warning: translationWarning } = useTranslatedTexts(translatable, lang);
 
   useEffect(() => {
     fetchJobs();
@@ -147,6 +147,9 @@ const Jobs = () => {
           </p>
           {translating && (
             <p className="mt-2 text-sm text-muted-foreground">{t("translating")}</p>
+          )}
+          {translationWarning && (
+            <p className="mt-2 text-sm text-muted-foreground" role="status">{translationWarning}</p>
           )}
         </div>
 

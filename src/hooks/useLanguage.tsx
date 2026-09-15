@@ -5,6 +5,23 @@ export type Lang = "en" | "te";
 
 export const LANG_KEY = "ptp_lang";
 
+const translationRequests = new Map<string, Promise<{ translations?: string[]; warning?: string }>>();
+
+const requestTranslations = (texts: string[], target: Lang) => {
+  const key = `${target}:${texts.join("\u0000")}`;
+  const existing = translationRequests.get(key);
+  if (existing) return existing;
+
+  const request = supabase.functions
+    .invoke("translate-text", { body: { texts, target } })
+    .then(({ data, error }) => {
+      if (error) throw error;
+      return (data ?? {}) as { translations?: string[]; warning?: string };
+    });
+  translationRequests.set(key, request);
+  return request;
+};
+
 export const getStoredLang = (): Lang =>
   (typeof window !== "undefined" && localStorage.getItem(LANG_KEY)) === "te" ? "te" : "en";
 
@@ -57,6 +74,7 @@ export const useLanguage = () => {
 export const useTranslatedTexts = (texts: string[], lang: Lang) => {
   const [map, setMap] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const unique = useMemo(
     () =>
@@ -97,16 +115,16 @@ export const useTranslatedTexts = (texts: string[], lang: Lang) => {
       try {
         for (let i = 0; i < missing.length; i += 60) {
           const batch = missing.slice(i, i + 60);
-          const { data, error } = await supabase.functions.invoke("translate-text", {
-            body: { texts: batch, target: lang },
-          });
-          // Stop on any failure (e.g. rate limit) — do not retry in a loop.
-          if (error || !data?.translations) break;
+          const data = await requestTranslations(batch, lang);
+          if (!data.translations) break;
           batch.forEach((src, idx) => {
-            cache[src] = data.translations[idx] ?? src;
+            cache[src] = data.translations?.[idx] ?? src;
           });
           localStorage.setItem(cacheKey, JSON.stringify(cache));
-          if (!cancelled) setMap({ ...cache });
+          if (!cancelled) {
+            setMap({ ...cache });
+            setWarning(data.warning ?? null);
+          }
         }
       } catch {
         // ignore — English text stays visible
@@ -131,5 +149,5 @@ export const useTranslatedTexts = (texts: string[], lang: Lang) => {
     [map, lang],
   );
 
-  return { tr, busy };
+  return { tr, busy, warning };
 };
