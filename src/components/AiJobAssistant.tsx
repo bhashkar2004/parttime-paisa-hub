@@ -18,6 +18,7 @@ import {
   MapPin,
 } from "lucide-react";
 import assistantLogo from "@/assets/ai-assistant.png";
+import { getStoredLang } from "@/hooks/useLanguage";
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
@@ -127,7 +128,18 @@ const AiJobAssistant = () => {
   const [myLocation, setMyLocation] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [needsLocation, setNeedsLocation] = useState(false);
-  const [voiceLang, setVoiceLang] = useState<string>("en-IN");
+  const [voiceLang, setVoiceLang] = useState<string>(() =>
+    getStoredLang() === "te" ? "te-IN" : "en-IN",
+  );
+
+  useEffect(() => {
+    const onLang = (e: Event) => {
+      const next = (e as CustomEvent).detail;
+      setVoiceLang(next === "te" ? "te-IN" : "en-IN");
+    };
+    window.addEventListener("ptp-lang", onLang);
+    return () => window.removeEventListener("ptp-lang", onLang);
+  }, []);
 
 
   const scrollRef = useRef<HTMLDivElement>(null);
