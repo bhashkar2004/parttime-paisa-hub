@@ -59,20 +59,38 @@ export const useTranslatedTexts = (texts: string[], lang: Lang) => {
   const [busy, setBusy] = useState(false);
 
   const unique = useMemo(
-    () => Array.from(new Set(texts.filter((t) => t && t.trim().length > 0))),
-    [texts],
+    () =>
+      Array.from(new Set(texts.filter((t) => t && t.trim().length > 0)))
+        .sort()
+        .join("\u0000"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [texts.join("\u0000")],
   );
+
+  // Keys we already requested (or that failed), so we never loop on the same texts.
+  const attempted = useRef<Set<string>>(new Set());
+  const inFlight = useRef(false);
 
   useEffect(() => {
     if (lang === "en" || unique.length === 0) return;
 
     let cancelled = false;
     const cacheKey = `ptp_tr_${lang}`;
-    const cache: Record<string, string> = JSON.parse(localStorage.getItem(cacheKey) || "{}");
-    const missing = unique.filter((t) => !cache[t]);
+    let cache: Record<string, string> = {};
+    try {
+      cache = JSON.parse(localStorage.getItem(cacheKey) || "{}");
+    } catch {
+      cache = {};
+    }
+    const missing = unique.split("\u0000").filter((t) => t && !cache[t]);
 
     setMap({ ...cache });
     if (missing.length === 0) return;
+
+    const runKey = `${lang}:${missing.join("\u0000")}`;
+    if (inFlight.current || attempted.current.has(runKey)) return;
+    attempted.current.add(runKey);
+    inFlight.current = true;
 
     const run = async () => {
       setBusy(true);
@@ -82,6 +100,7 @@ export const useTranslatedTexts = (texts: string[], lang: Lang) => {
           const { data, error } = await supabase.functions.invoke("translate-text", {
             body: { texts: batch, target: lang },
           });
+          // Stop on any failure (e.g. rate limit) — do not retry in a loop.
           if (error || !data?.translations) break;
           batch.forEach((src, idx) => {
             cache[src] = data.translations[idx] ?? src;
@@ -89,7 +108,10 @@ export const useTranslatedTexts = (texts: string[], lang: Lang) => {
           localStorage.setItem(cacheKey, JSON.stringify(cache));
           if (!cancelled) setMap({ ...cache });
         }
+      } catch {
+        // ignore — English text stays visible
       } finally {
+        inFlight.current = false;
         if (!cancelled) setBusy(false);
       }
     };
