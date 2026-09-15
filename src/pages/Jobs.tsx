@@ -170,24 +170,24 @@ const Jobs = () => {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading jobs...</p>
+            <p className="text-muted-foreground">{t("loading")}</p>
           </div>
         ) : filteredJobs.length === 0 ? (
           <Card className="p-12 text-center">
             <Briefcase className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-xl font-semibold mb-2">
-              {selectedLocation === "all" ? "No jobs available yet" : `No jobs in ${selectedLocation}`}
+              {selectedLocation === "all"
+                ? t("noJobs")
+                : `${t("noJobsHere")} ${tr(selectedLocation)}`}
             </h3>
             <p className="text-muted-foreground mb-6">
-              {selectedLocation === "all" 
-                ? "Be the first to post a job opportunity!" 
-                : "Try selecting a different location or check back later"}
+              {selectedLocation === "all" ? t("beFirst") : t("tryOther")}
             </p>
             <Button
               onClick={() => navigate("/add-job")}
               className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
             >
-              Post a Job
+              {t("postJob")}
             </Button>
           </Card>
         ) : (
@@ -207,40 +207,40 @@ const Jobs = () => {
                 )}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold mb-1 line-clamp-1">{job.job_name}</h3>
+                    <h3 className="text-xl font-semibold mb-1 line-clamp-1">{tr(job.job_name)}</h3>
                     <div className="flex items-center text-muted-foreground mb-2">
                       <Building2 className="h-4 w-4 mr-1" />
                       <span className="text-sm">{job.company}</span>
                     </div>
                   </div>
                   <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
-                    {job.job_type}
+                    {tr(job.job_type)}
                   </Badge>
                 </div>
 
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                  {job.description}
+                  {tr(job.description)}
                 </p>
 
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center text-sm">
                     <MapPin className="h-4 w-4 mr-2 text-primary" />
-                    <span>{job.location}</span>
+                    <span>{tr(job.location)}</span>
                   </div>
                   <div className="flex items-center text-sm">
                     <Calendar className="h-4 w-4 mr-2 text-primary" />
-                    <span>Apply by: {formatDate(job.application_deadline)}</span>
+                    <span>{t("applyBy")}: {formatDate(job.application_deadline)}</span>
                   </div>
                 </div>
 
                 {job.experience && (
                   <p className="text-sm text-muted-foreground mb-2">
-                    <strong>Experience:</strong> {job.experience}
+                    <strong>{t("experience")}:</strong> {tr(job.experience)}
                   </p>
                 )}
 
                 <p className="text-sm text-muted-foreground mb-4">
-                  <strong>Qualification:</strong> {job.qualification}
+                  <strong>{t("qualification")}:</strong> {tr(job.qualification)}
                 </p>
 
                 {(job.contact_phone || job.contact_email) && (
