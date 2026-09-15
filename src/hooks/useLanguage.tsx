@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LANGUAGES, findLanguage } from "@/lib/languages";
 
-export type Lang = "en" | "te";
+/** Short language code, e.g. "en", "te", "es". */
+export type Lang = string;
 
 export const LANG_KEY = "ptp_lang";
 
@@ -22,52 +24,66 @@ const requestTranslations = (texts: string[], target: Lang) => {
   return request;
 };
 
-export const getStoredLang = (): Lang =>
-  (typeof window !== "undefined" && localStorage.getItem(LANG_KEY)) === "te" ? "te" : "en";
-
-const UI: Record<string, { en: string; te: string }> = {
-  backHome: { en: "Back to Home", te: "హోమ్‌కి తిరిగి" },
-  myApplications: { en: "My Applications", te: "నా దరఖాస్తులు" },
-  myJobs: { en: "My Jobs", te: "నా ఉద్యోగాలు" },
-  postJob: { en: "Post a Job", te: "ఉద్యోగం పోస్ట్ చేయండి" },
-  heading: { en: "Available Opportunities", te: "అందుబాటులో ఉన్న ఉద్యోగాలు" },
-  subHeading: {
-    en: "Browse and apply for part-time positions",
-    te: "పార్ట్ టైమ్ ఉద్యోగాలు చూసి దరఖాస్తు చేసుకోండి",
-  },
-  allLocations: { en: "All Locations", te: "అన్ని ప్రాంతాలు" },
-  filterLocation: { en: "Filter by location", te: "ప్రాంతం ప్రకారం వడపోత" },
-  loading: { en: "Loading jobs...", te: "ఉద్యోగాలు లోడ్ అవుతున్నాయి..." },
-  noJobs: { en: "No jobs available yet", te: "ఇంకా ఉద్యోగాలు లేవు" },
-  noJobsHere: { en: "No jobs in", te: "ఇక్కడ ఉద్యోగాలు లేవు:" },
-  beFirst: { en: "Be the first to post a job opportunity!", te: "మొదటి ఉద్యోగాన్ని మీరే పోస్ట్ చేయండి!" },
-  tryOther: {
-    en: "Try selecting a different location or check back later",
-    te: "వేరే ప్రాంతం ఎంచుకోండి లేదా తర్వాత చూడండి",
-  },
-  applyBy: { en: "Apply by", te: "చివరి తేదీ" },
-  experience: { en: "Experience", te: "అనుభవం" },
-  qualification: { en: "Qualification", te: "విద్యార్హత" },
-  salary: { en: "Salary", te: "జీతం" },
-  contactRecruiter: { en: "Contact Recruiter:", te: "యజమానిని సంప్రదించండి:" },
-  call: { en: "Call", te: "కాల్" },
-  email: { en: "Email", te: "ఇమెయిల్" },
-  applyNow: { en: "Apply Now", te: "ఇప్పుడే దరఖాస్తు చేయండి" },
-  translating: { en: "Translating...", te: "అనువాదం జరుగుతోంది..." },
+export const getStoredLang = (): Lang => {
+  if (typeof window === "undefined") return "en";
+  const stored = localStorage.getItem(LANG_KEY);
+  return LANGUAGES.some((l) => l.code === stored) ? (stored as Lang) : "en";
 };
+
+export const storeLang = (next: Lang) => {
+  localStorage.setItem(LANG_KEY, next);
+  window.dispatchEvent(new CustomEvent("ptp-lang", { detail: next }));
+};
+
+/** English source strings; every other language is translated on the fly. */
+const UI = {
+  backHome: "Back to Home",
+  myApplications: "My Applications",
+  myJobs: "My Jobs",
+  postJob: "Post a Job",
+  heading: "Available Opportunities",
+  subHeading: "Browse and apply for part-time positions",
+  allLocations: "All Locations",
+  filterLocation: "Filter by location",
+  loading: "Loading jobs...",
+  noJobs: "No jobs available yet",
+  noJobsHere: "No jobs in",
+  beFirst: "Be the first to post a job opportunity!",
+  tryOther: "Try selecting a different location or check back later",
+  applyBy: "Apply by",
+  experience: "Experience",
+  qualification: "Qualification",
+  salary: "Salary",
+  contactRecruiter: "Contact Recruiter:",
+  call: "Call",
+  email: "Email",
+  applyNow: "Apply Now",
+  translating: "Translating...",
+  changeLanguage: "Change language in My Profile",
+} as const;
+
+export type UiKey = keyof typeof UI;
 
 export const useLanguage = () => {
   const [lang, setLangState] = useState<Lang>(getStoredLang);
 
-  const setLang = useCallback((next: Lang) => {
-    setLangState(next);
-    localStorage.setItem(LANG_KEY, next);
-    window.dispatchEvent(new CustomEvent("ptp-lang", { detail: next }));
+  useEffect(() => {
+    const onLang = (e: Event) => setLangState((e as CustomEvent<Lang>).detail);
+    window.addEventListener("ptp-lang", onLang);
+    return () => window.removeEventListener("ptp-lang", onLang);
   }, []);
 
-  const t = useCallback((key: keyof typeof UI) => UI[key]?.[lang] ?? String(key), [lang]);
+  const setLang = useCallback((next: Lang) => {
+    setLangState(next);
+    storeLang(next);
+  }, []);
 
-  return { lang, setLang, t };
+  const uiTexts = useMemo(() => Object.values(UI) as string[], []);
+  const { tr } = useTranslatedTexts(uiTexts, lang);
+
+  const t = useCallback((key: UiKey) => tr(UI[key]) || UI[key], [tr]);
+
+  return { lang, setLang, t, language: findLanguage(lang) };
 };
 
 /** Translates a list of strings, caching results in localStorage. */
