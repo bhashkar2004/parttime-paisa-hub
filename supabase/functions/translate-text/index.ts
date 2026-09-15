@@ -57,11 +57,13 @@ Deno.serve(async (req) => {
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
       console.error("translate failed", res.status, detail);
-      const msg =
-        res.status === 429
-          ? "Too many requests. Please try again in a moment."
-          : "Translation is unavailable right now.";
-      return json({ error: msg }, res.status === 429 ? 429 : 503);
+      if (res.status === 429) {
+        return json({
+          translations: clean,
+          warning: "Too many requests. Please try Telugu translation again in a moment.",
+        });
+      }
+      return json({ error: "Translation is unavailable right now." }, 503);
     }
 
     const data = await res.json();
