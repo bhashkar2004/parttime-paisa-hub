@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import assistantLogo from "@/assets/ai-assistant.png";
 import { getStoredLang } from "@/hooks/useLanguage";
+import { findLanguage } from "@/lib/languages";
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
@@ -32,11 +33,6 @@ const SUGGESTIONS = [
 const getSpeechRecognition = () =>
   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-const VOICE_LANGS = [
-  { code: "en-IN", label: "English" },
-  { code: "hi-IN", label: "हिंदी" },
-  { code: "te-IN", label: "తెలుగు" },
-] as const;
 
 const NEAR_ME = /near me|nearby|near by|around me|mere paas|mere pass|paas m|aas paas|aaspaas|naa daggara|na daggara|daggarlo|chuttupakkala/i;
 
@@ -128,14 +124,12 @@ const AiJobAssistant = () => {
   const [myLocation, setMyLocation] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [needsLocation, setNeedsLocation] = useState(false);
-  const [voiceLang, setVoiceLang] = useState<string>(() =>
-    getStoredLang() === "te" ? "te-IN" : "en-IN",
-  );
+  const [voiceLang, setVoiceLang] = useState<string>(() => findLanguage(getStoredLang()).locale);
 
   useEffect(() => {
     const onLang = (e: Event) => {
       const next = (e as CustomEvent).detail;
-      setVoiceLang(next === "te" ? "te-IN" : "en-IN");
+      setVoiceLang(findLanguage(next).locale);
     };
     window.addEventListener("ptp-lang", onLang);
     return () => window.removeEventListener("ptp-lang", onLang);
@@ -421,7 +415,7 @@ const AiJobAssistant = () => {
               <div className="flex-1 text-left">
                 <SheetTitle className="text-base">AI Job Assistant</SheetTitle>
                 <p className="text-xs text-muted-foreground">
-                  Ask in English, Hindi, Hinglish or Telugu
+                  Ask in any language
                 </p>
               </div>
               <Button
@@ -551,21 +545,9 @@ const AiJobAssistant = () => {
                 </Button>
               )}
             </div>
-            <div className="mb-2 flex items-center gap-1">
-              <span className="mr-1 text-xs text-muted-foreground">Speak in:</span>
-              {VOICE_LANGS.map((l) => (
-                <Button
-                  key={l.code}
-                  type="button"
-                  size="sm"
-                  variant={voiceLang === l.code ? "default" : "outline"}
-                  className="h-7 px-2 text-xs"
-                  onClick={() => setVoiceLang(l.code)}
-                >
-                  {l.label}
-                </Button>
-              ))}
-            </div>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Language: {findLanguage(getStoredLang()).native} · change it in My Profile
+            </p>
             <div className="flex items-end gap-2">
               <Textarea
                 ref={textareaRef}

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, Save, X, UserRound } from "lucide-react";
+import { ArrowLeft, Pencil, Save, X, UserRound, Camera, Languages } from "lucide-react";
+import { LANGUAGES, findLanguage } from "@/lib/languages";
+import { storeLang } from "@/hooks/useLanguage";
 
 interface ProfileData {
   id: string;
@@ -28,6 +30,8 @@ interface ProfileData {
   experience: string | null;
   skills: string | null;
   bio: string | null;
+  avatar_url: string | null;
+  preferred_language: string;
 }
 
 const emptyForm = {
@@ -49,6 +53,64 @@ const Profile = () => {
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [searchParams] = useSearchParams();
+  const completing = searchParams.get("complete") === "1";
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (completing) setEditing(true);
+  }, [completing]);
+
+  useEffect(() => {
+    const path = profile?.avatar_url;
+    if (!path) return setAvatarSrc(null);
+    supabase.storage
+      .from("avatars")
+      .createSignedUrl(path, 60 * 60)
+      .then(({ data }) => setAvatarSrc(data?.signedUrl ?? null));
+  }, [profile?.avatar_url]);
+
+  const handlePhoto = async (file: File | undefined) => {
+    if (!file || !profile) return;
+    if (!file.type.startsWith("image/")) return toast.error("Please choose an image file");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Photo must be under 5 MB");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${profile.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: path })
+        .eq("id", profile.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      setProfile(data as ProfileData);
+      toast.success("Photo updated");
+    } catch (error: any) {
+      toast.error("Could not upload photo", { description: error.message });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleLanguage = async (code: string) => {
+    if (!profile) return;
+    storeLang(code);
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ preferred_language: code })
+      .eq("id", profile.id)
+      .select("*")
+      .single();
+    if (error) return toast.error("Could not save language", { description: error.message });
+    setProfile(data as ProfileData);
+    toast.success(`Language set to ${findLanguage(code).english}`);
+  };
 
   useEffect(() => {
     loadProfile();
@@ -95,6 +157,7 @@ const Profile = () => {
         setProfile(created as ProfileData);
         fillForm(created as ProfileData);
       } else {
+        if (data.preferred_language) storeLang(data.preferred_language);
         setProfile(data as ProfileData);
         fillForm(data as ProfileData);
       }
@@ -108,6 +171,10 @@ const Profile = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
+    if (completing && (!form.phone.trim() || !form.location.trim() || !form.qualification)) {
+      toast.error("Please add your phone, location and qualification");
+      return;
+    }
     setSaving(true);
     try {
       const { data, error } = await supabase
@@ -133,6 +200,7 @@ const Profile = () => {
       fillForm(data as ProfileData);
       setEditing(false);
       toast.success("Profile updated successfully");
+      if (completing) navigate("/");
     } catch (error: any) {
       toast.error("Could not save your details", { description: error.message });
     } finally {
@@ -147,6 +215,58 @@ const Profile = () => {
     .join("")
     .toUpperCase();
 
+  const avatarBlock = (
+    <div className="relative h-20 w-20 shrink-0">
+      {avatarSrc ? (
+        <img src={avatarSrc} alt="Profile photo" className="h-20 w-20 rounded-full object-cover" />
+      ) : (
+        <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground text-xl font-bold">
+          {initials || <UserRound className="h-8 w-8" />}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        aria-label="Change profile photo"
+        className="absolute -bottom-1 -right-1 rounded-full border bg-background p-1.5 shadow hover:bg-muted"
+      >
+        <Camera className="h-4 w-4" />
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handlePhoto(e.target.files?.[0])}
+      />
+    </div>
+  );
+
+  const languageCard = profile && (
+    <Card className="p-6">
+      <div className="flex items-center gap-2 mb-1">
+        <Languages className="h-5 w-5 text-primary" />
+        <h3 className="text-lg font-semibold">Preferred Language</h3>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Job listings, the AI assistant and voice replies will use this language across the app.
+      </p>
+      <Select value={profile.preferred_language || "en"} onValueChange={handleLanguage}>
+        <SelectTrigger className="max-w-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-80">
+          {LANGUAGES.map((l) => (
+            <SelectItem key={l.code} value={l.code}>
+              {l.native}{l.native !== l.english ? ` — ${l.english}` : ""}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Card>
+  );
+
   const details: { label: string; value: string | null }[] = profile
     ? [
         { label: "Full Name", value: profile.full_name },
@@ -158,6 +278,7 @@ const Profile = () => {
         { label: "Qualification", value: profile.qualification },
         { label: "Experience", value: profile.experience },
         { label: "Skills", value: profile.skills },
+        { label: "Preferred Language", value: findLanguage(profile.preferred_language).english },
       ]
     : [];
 
@@ -181,14 +302,24 @@ const Profile = () => {
         </div>
 
         <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          My Profile
+          {completing ? "Complete Your Profile" : "My Profile"}
         </h1>
+        {completing && (
+          <p className="-mt-6 mb-6 text-muted-foreground">
+            Tell us a bit more about you so employers can reach you. Phone, location and qualification are required.
+          </p>
+        )}
 
         {loading ? (
           <p className="text-muted-foreground">Loading your profile...</p>
         ) : !profile ? (
           <p className="text-muted-foreground">Profile not available.</p>
         ) : editing ? (
+          <div className="space-y-6">
+          <Card className="p-6 flex items-center gap-4">
+            {avatarBlock}
+            <p className="text-sm text-muted-foreground">Tap the camera to add or change your photo.</p>
+          </Card>
           <Card className="p-6">
             <form onSubmit={handleSave} className="space-y-5">
               <div className="grid gap-5 md:grid-cols-2">
@@ -323,12 +454,12 @@ const Profile = () => {
               </div>
             </form>
           </Card>
+          {languageCard}
+          </div>
         ) : (
           <div className="space-y-6">
             <Card className="p-6 flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground text-xl font-bold">
-                {initials || <UserRound className="h-8 w-8" />}
-              </div>
+              {avatarBlock}
               <div>
                 <h2 className="text-2xl font-semibold">
                   {profile.full_name || "Add your name"}
@@ -355,6 +486,8 @@ const Profile = () => {
                 {profile.bio || "Nothing added yet."}
               </p>
             </Card>
+
+            {languageCard}
           </div>
         )}
       </div>

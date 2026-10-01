@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
         voice: "alloy",
         response_format: "mp3",
         instructions:
-          "Speak in a friendly, clear, helpful tone at a natural pace. Detect the language of the text and speak it naturally as a native Indian speaker would: English, Hindi, Hinglish, or Telugu (including Telugu written in Roman letters).",
+          "Speak in a friendly, clear, helpful tone at a natural pace. Detect the language of the text and speak it naturally as a native Indian speaker would: whatever language it is written in, in a natural native accent.",
       }),
     });
 

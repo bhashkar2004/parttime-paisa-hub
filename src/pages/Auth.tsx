@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { storeLang } from "@/hooks/useLanguage";
 import { Briefcase, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
@@ -66,6 +67,21 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const goAfterLogin = async (userId?: string) => {
+    if (!userId) return navigate("/");
+    const { data } = await supabase
+      .from("profiles")
+      .select("phone, location, qualification, preferred_language")
+      .eq("id", userId)
+      .maybeSingle();
+    if (data?.preferred_language) storeLang(data.preferred_language);
+    if (!data || !data.phone || !data.location || !data.qualification) {
+      navigate("/profile?complete=1");
+    } else {
+      navigate("/");
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -82,7 +98,7 @@ const Auth = () => {
         description: "You've successfully logged in.",
       });
 
-      navigate("/");
+      await goAfterLogin(data.user?.id);
     } catch (error: any) {
       toast.error("Login failed", {
         description: error.message || "Invalid email or password",
@@ -129,7 +145,8 @@ const Auth = () => {
         description: "Welcome to Part Time Paisa",
       });
 
-      navigate("/");
+      if (data.session) await goAfterLogin(data.user?.id);
+      else navigate("/");
     } catch (error: any) {
       toast.error("Signup failed", {
         description: error.message || "Could not create account",

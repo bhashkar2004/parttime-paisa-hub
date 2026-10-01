@@ -33,7 +33,7 @@ const Jobs = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [locations, setLocations] = useState<string[]>([]);
-  const { lang, setLang, t } = useLanguage();
+  const { lang, t, language } = useLanguage();
 
   const translatable = filteredJobs.flatMap((job) => [
     job.job_name,
@@ -97,25 +97,15 @@ const Jobs = () => {
             {t("backHome")}
           </Button>
           <div className="flex gap-2 flex-wrap items-center">
-            <div className="flex items-center rounded-md border p-0.5">
-              <Languages className="mx-1.5 h-4 w-4 text-muted-foreground" />
-              <Button
-                size="sm"
-                variant={lang === "en" ? "default" : "ghost"}
-                className="h-7 px-2 text-xs"
-                onClick={() => setLang("en")}
-              >
-                English
-              </Button>
-              <Button
-                size="sm"
-                variant={lang === "te" ? "default" : "ghost"}
-                className="h-7 px-2 text-xs"
-                onClick={() => setLang("te")}
-              >
-                తెలుగు
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/profile")}
+              title={t("changeLanguage")}
+            >
+              <Languages className="mr-1.5 h-4 w-4" />
+              {language.native}
+            </Button>
             <Button
               onClick={() => navigate("/my-applications")}
               variant="outline"
