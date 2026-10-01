@@ -4,9 +4,14 @@ const AI_URL = "https://ai.gateway.lovable.dev/v1/responses";
 const MODEL = "openai/gpt-6-astra";
 
 const LANG_NAMES: Record<string, string> = {
-  te: "Telugu (Telugu script)",
-  hi: "Hindi (Devanagari script)",
-  en: "English",
+  en: "English", hi: "Hindi (Devanagari script)", te: "Telugu (Telugu script)",
+  ta: "Tamil (Tamil script)", kn: "Kannada (Kannada script)", ml: "Malayalam (Malayalam script)",
+  mr: "Marathi (Devanagari script)", bn: "Bengali (Bengali script)", gu: "Gujarati (Gujarati script)",
+  pa: "Punjabi (Gurmukhi script)", or: "Odia (Odia script)", as: "Assamese (Bengali script)",
+  ur: "Urdu (Arabic script)", ar: "Arabic", zh: "Simplified Chinese", es: "Spanish",
+  fr: "French", de: "German", pt: "Portuguese", ru: "Russian", ja: "Japanese", ko: "Korean",
+  it: "Italian", tr: "Turkish", vi: "Vietnamese", th: "Thai", id: "Indonesian",
+  fa: "Persian", sw: "Swahili", nl: "Dutch", pl: "Polish",
 };
 
 Deno.serve(async (req) => {
