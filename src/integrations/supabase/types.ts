@@ -194,6 +194,7 @@ export type Database = {
           id: string
           location: string | null
           phone: string | null
+          preferred_language: string
           qualification: string | null
           skills: string | null
           updated_at: string
@@ -210,6 +211,7 @@ export type Database = {
           id: string
           location?: string | null
           phone?: string | null
+          preferred_language?: string
           qualification?: string | null
           skills?: string | null
           updated_at?: string
@@ -226,6 +228,7 @@ export type Database = {
           id?: string
           location?: string | null
           phone?: string | null
+          preferred_language?: string
           qualification?: string | null
           skills?: string | null
           updated_at?: string
